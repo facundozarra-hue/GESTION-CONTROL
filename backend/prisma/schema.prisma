@@ -1,0 +1,110 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum TipoVehiculo {
+  CAMION
+  CAMIONETA
+  AUTO
+  MOTO
+  OTRO
+}
+
+enum EstadoVehiculo {
+  ACTIVO
+  EN_MANTENIMIENTO
+  BAJA
+}
+
+enum EstadoConductor {
+  ACTIVO
+  INACTIVO
+  SUSPENDIDO
+}
+
+enum TipoMantenimiento {
+  PREVENTIVO
+  CORRECTIVO
+  REVISION
+}
+
+enum EstadoMantenimiento {
+  PENDIENTE
+  EN_PROCESO
+  COMPLETADO
+  CANCELADO
+}
+
+model Vehiculo {
+  id                     Int            @id @default(autoincrement())
+  patente                String         @unique
+  marca                  String
+  modelo                 String
+  anio                   Int
+  color                  String?
+  tipo                   TipoVehiculo   @default(AUTO)
+  kilometraje            Int            @default(0)
+  estado                 EstadoVehiculo @default(ACTIVO)
+  vencimientoVTV         DateTime?
+  vencimientoSeguro      DateTime?
+  vencimientoHabilitacion DateTime?
+  observaciones          String?
+  createdAt              DateTime       @default(now())
+  updatedAt              DateTime       @updatedAt
+  mantenimientos         Mantenimiento[]
+  asignaciones           Asignacion[]
+}
+
+model Conductor {
+  id                  Int             @id @default(autoincrement())
+  nombre              String
+  apellido            String
+  dni                 String          @unique
+  telefono            String?
+  email               String?
+  licenciaCategoria   String?
+  licenciaVencimiento DateTime?
+  estado              EstadoConductor @default(ACTIVO)
+  observaciones       String?
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
+  asignaciones        Asignacion[]
+}
+
+model Asignacion {
+  id          Int       @id @default(autoincrement())
+  vehiculoId  Int
+  conductorId Int
+  fechaInicio DateTime  @default(now())
+  fechaFin    DateTime?
+  activa      Boolean   @default(true)
+  observaciones String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  vehiculo    Vehiculo  @relation(fields: [vehiculoId], references: [id])
+  conductor   Conductor @relation(fields: [conductorId], references: [id])
+}
+
+model Mantenimiento {
+  id                 Int                 @id @default(autoincrement())
+  vehiculoId         Int
+  tipo               TipoMantenimiento   @default(PREVENTIVO)
+  descripcion        String
+  taller             String?
+  costo              Float?
+  kilometrajeAlService Int?
+  fechaIngreso       DateTime            @default(now())
+  fechaEgreso        DateTime?
+  estado             EstadoMantenimiento @default(PENDIENTE)
+  proximoServiceKm   Int?
+  proximoServiceFecha DateTime?
+  observaciones      String?
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  vehiculo           Vehiculo            @relation(fields: [vehiculoId], references: [id])
+}
