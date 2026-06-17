@@ -1,6 +1,20 @@
 import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
+function normalizarFecha(val) {
+  if (!val || val === '') return null;
+  if (val.includes('T')) return val;
+  return new Date(val).toISOString();
+}
+
+function normalizarFechas(data) {
+  const r = { ...data };
+  r.fechaIngreso = normalizarFecha(r.fechaIngreso) ?? undefined;
+  r.fechaEgreso = normalizarFecha(r.fechaEgreso);
+  r.proximoServiceFecha = normalizarFecha(r.proximoServiceFecha);
+  return r;
+}
+
 export async function listar(req, res, next) {
   try {
     const { vehiculoId, tipo, estado } = req.query;
@@ -34,7 +48,7 @@ export async function obtener(req, res, next) {
 
 export async function crear(req, res, next) {
   try {
-    const data = { ...req.body };
+    const data = normalizarFechas({ ...req.body });
     if (data.vehiculoId) data.vehiculoId = Number(data.vehiculoId);
     if (data.costo) data.costo = parseFloat(data.costo);
     if (data.kilometrajeAlService) data.kilometrajeAlService = parseInt(data.kilometrajeAlService);
@@ -54,7 +68,7 @@ export async function crear(req, res, next) {
 
 export async function actualizar(req, res, next) {
   try {
-    const data = { ...req.body };
+    const data = normalizarFechas({ ...req.body });
     if (data.costo) data.costo = parseFloat(data.costo);
     if (data.kilometrajeAlService) data.kilometrajeAlService = parseInt(data.kilometrajeAlService);
 

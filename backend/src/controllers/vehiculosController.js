@@ -1,6 +1,19 @@
 import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
+function normalizarFechas(data) {
+  const camposFecha = ['vencimientoVTV', 'vencimientoSeguro', 'vencimientoHabilitacion'];
+  const resultado = { ...data };
+  for (const campo of camposFecha) {
+    if (resultado[campo] === '' || resultado[campo] === null) {
+      resultado[campo] = null;
+    } else if (resultado[campo] && !resultado[campo].includes('T')) {
+      resultado[campo] = new Date(resultado[campo]).toISOString();
+    }
+  }
+  return resultado;
+}
+
 export async function listar(req, res, next) {
   try {
     const { estado } = req.query;
@@ -43,7 +56,7 @@ export async function obtener(req, res, next) {
 
 export async function crear(req, res, next) {
   try {
-    const vehiculo = await prisma.vehiculo.create({ data: req.body });
+    const vehiculo = await prisma.vehiculo.create({ data: normalizarFechas(req.body) });
     res.status(201).json(vehiculo);
   } catch (err) {
     next(err);
@@ -54,7 +67,7 @@ export async function actualizar(req, res, next) {
   try {
     const vehiculo = await prisma.vehiculo.update({
       where: { id: Number(req.params.id) },
-      data: req.body,
+      data: normalizarFechas(req.body),
     });
     res.json(vehiculo);
   } catch (err) {
